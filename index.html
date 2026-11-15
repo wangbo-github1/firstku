@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>成绩分析</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    padding: 32px 28px;
+    width: 100%;
+    max-width: 400px;
+  }
+  h1 {
+    text-align: center;
+    font-size: 22px;
+    color: #333;
+    margin-bottom: 6px;
+  }
+  .sub {
+    text-align: center;
+    font-size: 13px;
+    color: #999;
+    margin-bottom: 24px;
+  }
+  .form-item { margin-bottom: 18px; }
+  label {
+    display: block;
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 6px;
+  }
+  label .req { color: #e74c3c; margin-left: 2px; }
+  input, select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #dcdfe6;
+    border-radius: 8px;
+    font-size: 15px;
+    color: #333;
+    outline: none;
+    transition: border-color .2s;
+    background: #fff;
+  }
+  input:focus, select:focus { border-color: #667eea; }
+  .score-row { display: flex; gap: 12px; }
+  .score-row .form-item { flex: 1; }
+  button {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: opacity .2s;
+  }
+  button:active { opacity: .85; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .tip { text-align: center; font-size: 12px; color: #bbb; margin-top: 12px; }
+  /* 分析结果弹窗 */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.5);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .overlay.show { display: flex; }
+  .result {
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px 24px;
+    width: 100%;
+    max-width: 340px;
+    text-align: center;
+    animation: pop .25s ease;
+  }
+  @keyframes pop {
+    from { transform: scale(.85); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .result h2 { font-size: 18px; color: #333; margin-bottom: 16px; }
+  .result p { font-size: 14px; color: #666; margin-bottom: 8px; }
+  .low-box {
+    background: #fff6f0;
+    border: 1px solid #ffcfb3;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 10px 0 4px;
+    text-align: left;
+  }
+  .low-item { font-size: 13px; color: #e67e22; margin-bottom: 4px; font-weight: 600; }
+  .low-contact { font-size: 13px; color: #e74c3c; margin-top: 8px; line-height: 1.6; }
+  .close-btn {
+    background: #eee;
+    color: #555;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 14px;
+    margin-top: 0;
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>📊 成绩分析</h1>
+    <div class="sub">请填写以下信息后点击"开始分析"</div>
+
+    <div class="form-item">
+      <label>姓名<span class="req">*</span></label>
+      <input type="text" id="name" placeholder="请输入姓名">
+    </div>
+
+    <div class="form-item">
+      <label>年级<span class="req">*</span></label>
+      <select id="grade">
+        <option value="">请选择年级</option>
+        <option>一年级</option>
+        <option>二年级</option>
+        <option>三年级</option>
+        <option>四年级</option>
+        <option>五年级</option>
+        <option>六年级</option>
+        <option>初一</option>
+        <option>初二</option>
+        <option>初三</option>
+        <option>高一</option>
+        <option>高二</option>
+        <option>高三</option>
+      </select>
+    </div>
+
+    <div class="score-row">
+      <div class="form-item">
+        <label>语文分数<span class="req">*</span></label>
+        <input type="number" id="chinese" min="0" max="150" placeholder="0-150">
+      </div>
+      <div class="form-item">
+        <label>数学分数<span class="req">*</span></label>
+        <input type="number" id="math" min="0" max="150" placeholder="0-150">
+      </div>
+      <div class="form-item">
+        <label>英语分数<span class="req">*</span></label>
+        <input type="number" id="english" min="0" max="150" placeholder="0-150">
+      </div>
+    </div>
+
+    <button id="analyzeBtn" onclick="analyze()">开始分析</button>
+    <div class="tip">填写完整后即可查看分析结果（低于 140 分的科目会提示分数较低）</div>
+  </div>
+
+  <!-- 结果弹窗 -->
+  <div class="overlay" id="overlay">
+    <div class="result">
+      <h2>📈 分析结果</h2>
+      <p id="rInfo"></p>
+      <p id="rScores"></p>
+      <p id="rAvg"></p>
+      <div id="lowBox" class="low-box" style="display:none;"></div>
+      <button class="close-btn" onclick="closeOverlay()">关闭</button>
+    </div>
+  </div>
+
+<script>
+function analyze() {
+  var name = document.getElementById('name').value.trim();
+  var grade = document.getElementById('grade').value;
+  var cn = document.getElementById('chinese').value;
+  var ma = document.getElementById('math').value;
+  var en = document.getElementById('english').value;
+
+  if (!name) { alert('请先输入姓名'); return; }
+  if (!grade) { alert('请选择年级'); return; }
+  if (cn === '' || ma === '' || en === '') { alert('请填写完整的语数英分数'); return; }
+
+  cn = Number(cn); ma = Number(ma); en = Number(en);
+  if (cn < 0 || cn > 150 || ma < 0 || ma > 150 || en < 0 || en > 150) {
+    alert('分数范围为 0 - 150，请检查填写内容'); return;
+  }
+
+  var total = cn + ma + en;
+  var avg = (total / 3).toFixed(1);
+  document.getElementById('rInfo').textContent = name + ' · ' + grade;
+  document.getElementById('rScores').textContent =
+    '语文 ' + cn + ' 分，数学 ' + ma + ' 分，英语 ' + en + ' 分（总分 ' + total + '）';
+  document.getElementById('rAvg').textContent = '三科平均分：' + avg + ' 分';
+
+  // 低分判断：每科低于 140 分单独提示
+  var lowSubjects = [];
+  if (cn < 140) { lowSubjects.push('语文 ' + cn + ' 分'); }
+  if (ma < 140) { lowSubjects.push('数学 ' + ma + ' 分'); }
+  if (en < 140) { lowSubjects.push('英语 ' + en + ' 分'); }
+
+  var lowBox = document.getElementById('lowBox');
+  if (lowSubjects.length > 0) {
+    var html = '';
+    lowSubjects.forEach(function (s) {
+      html += '<div class="low-item">⚠️ ' + s + '，分数较低</div>';
+    });
+    html += '<div class="low-contact">技巧快速提分请拨打电话 18732167665 或添加微信 18732167665</div>';
+    lowBox.innerHTML = html;
+    lowBox.style.display = 'block';
+  } else {
+    lowBox.style.display = 'none';
+  }
+
+  document.getElementById('overlay').classList.add('show');
+}
+
+function closeOverlay() {
+  document.getElementById('overlay').classList.remove('show');
+}
+</script>
+</body>
+</html>
