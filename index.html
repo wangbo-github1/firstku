@@ -132,18 +132,10 @@
 
     <div class="form-item">
       <label>年级<span class="req">*</span></label>
-      <select id="grade">
+      <select id="grade" onchange="onGradeChange()">
         <option value="">请选择年级</option>
-        <option>一年级</option>
-        <option>二年级</option>
-        <option>三年级</option>
-        <option>四年级</option>
-        <option>五年级</option>
-        <option>六年级</option>
-        <option>初一</option>
         <option>初二</option>
         <option>初三</option>
-        <option>高一</option>
         <option>高二</option>
         <option>高三</option>
       </select>
@@ -152,20 +144,20 @@
     <div class="score-row">
       <div class="form-item">
         <label>语文分数<span class="req">*</span></label>
-        <input type="number" id="chinese" min="0" max="150" placeholder="0-150">
+        <input type="number" id="chinese" class="score-input" min="0" max="150" placeholder="0-150">
       </div>
       <div class="form-item">
         <label>数学分数<span class="req">*</span></label>
-        <input type="number" id="math" min="0" max="150" placeholder="0-150">
+        <input type="number" id="math" class="score-input" min="0" max="150" placeholder="0-150">
       </div>
       <div class="form-item">
         <label>英语分数<span class="req">*</span></label>
-        <input type="number" id="english" min="0" max="150" placeholder="0-150">
+        <input type="number" id="english" class="score-input" min="0" max="150" placeholder="0-150">
       </div>
     </div>
 
     <button id="analyzeBtn" onclick="analyze()">开始分析</button>
-    <div class="tip">填写完整后即可查看分析结果（低于 140 分的科目会提示分数较低）</div>
+    <div class="tip">初二/初三：0-120 分，低于 110 提示分数较低<br>高二/高三：0-150 分，低于 140 提示分数较低</div>
   </div>
 
   <!-- 结果弹窗 -->
@@ -181,6 +173,27 @@
   </div>
 
 <script>
+// 年级配置：初二/初三 满分 120、低分线 110；高二/高三 满分 150、低分线 140
+var GRADE_RULES = {
+  '初二': { max: 120, low: 110 },
+  '初三': { max: 120, low: 110 },
+  '高二': { max: 150, low: 140 },
+  '高三': { max: 150, low: 140 }
+};
+
+function onGradeChange() {
+  var grade = document.getElementById('grade').value;
+  var rule = GRADE_RULES[grade];
+  if (!rule) { return; }
+  var inputs = document.querySelectorAll('.score-input');
+  inputs.forEach(function (el) {
+    el.setAttribute('max', rule.max);
+    el.setAttribute('min', 0);
+    el.setAttribute('placeholder', '0-' + rule.max);
+    if (el.value !== '' && Number(el.value) > rule.max) { el.value = ''; }
+  });
+}
+
 function analyze() {
   var name = document.getElementById('name').value.trim();
   var grade = document.getElementById('grade').value;
@@ -192,9 +205,10 @@ function analyze() {
   if (!grade) { alert('请选择年级'); return; }
   if (cn === '' || ma === '' || en === '') { alert('请填写完整的语数英分数'); return; }
 
+  var rule = GRADE_RULES[grade];
   cn = Number(cn); ma = Number(ma); en = Number(en);
-  if (cn < 0 || cn > 150 || ma < 0 || ma > 150 || en < 0 || en > 150) {
-    alert('分数范围为 0 - 150，请检查填写内容'); return;
+  if (cn < 0 || cn > rule.max || ma < 0 || ma > rule.max || en < 0 || en > rule.max) {
+    alert(grade + ' 分数范围为 0 - ' + rule.max + '，请检查填写内容'); return;
   }
 
   var total = cn + ma + en;
@@ -204,19 +218,19 @@ function analyze() {
     '语文 ' + cn + ' 分，数学 ' + ma + ' 分，英语 ' + en + ' 分（总分 ' + total + '）';
   document.getElementById('rAvg').textContent = '三科平均分：' + avg + ' 分';
 
-  // 低分判断：每科低于 140 分单独提示
+  // 低分判断：按年级校验标准，每科单独提示
   var lowSubjects = [];
-  if (cn < 140) { lowSubjects.push('语文 ' + cn + ' 分'); }
-  if (ma < 140) { lowSubjects.push('数学 ' + ma + ' 分'); }
-  if (en < 140) { lowSubjects.push('英语 ' + en + ' 分'); }
+  if (cn < rule.low) { lowSubjects.push('语文'); }
+  if (ma < rule.low) { lowSubjects.push('数学'); }
+  if (en < rule.low) { lowSubjects.push('英语'); }
 
   var lowBox = document.getElementById('lowBox');
   if (lowSubjects.length > 0) {
     var html = '';
     lowSubjects.forEach(function (s) {
-      html += '<div class="low-item">⚠️ ' + s + '，分数较低</div>';
+      html += '<div class="low-item">⚠️ ' + s + '分数较低</div>';
     });
-    html += '<div class="low-contact">技巧快速提分请拨打电话 18732167665 或添加微信 18732167665</div>';
+    html += '<div class="low-contact">不补课快速提高分数30-50，添加微信或者电话联系12345678910</div>';
     lowBox.innerHTML = html;
     lowBox.style.display = 'block';
   } else {
