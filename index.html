@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>成绩分析</title>
+<title>异想天开中高考技巧提分</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -157,7 +157,6 @@
     </div>
 
     <button id="analyzeBtn" onclick="analyze()">开始分析</button>
-    <div class="tip">初二/初三：0-120 分，低于 110 提示分数较低<br>高二/高三：0-150 分，低于 140 提示分数较低</div>
   </div>
 
   <!-- 结果弹窗 -->
@@ -230,7 +229,7 @@ function analyze() {
     lowSubjects.forEach(function (s) {
       html += '<div class="low-item">⚠️ ' + s + '分数较低</div>';
     });
-    html += '<div class="low-contact">不补课快速提高分数30-50，添加微信或者电话联系12345678910</div>';
+    html += '<div class="low-contact">不补课快速提高分数30-50<br>添加微信或者电话联系12345678910</div>';
     lowBox.innerHTML = html;
     lowBox.style.display = 'block';
   } else {
