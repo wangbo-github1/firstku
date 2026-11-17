@@ -233,15 +233,24 @@ function analyze() {
     html += '<div class="low-item">' + lowSubjects.join(' ') + '分数较低</div>';
   }
 
-  // 上线差距：650 为一中线，600 为三中线，差值红色加粗
-  var gap1 = 650 - total;
-  var gap2 = 600 - total;
-  html += '<div class="gap-line">距离一中上线还需要 <span class="gap-num">' + gap1 + '</span> 分</div>';
-  html += '<div class="gap-line">距离三中上线还需要 <span class="gap-num">' + gap2 + '</span> 分</div>';
+  var isMiddle = (grade === '初二' || grade === '初三');
+
+  if (isMiddle) {
+    // 初中：一中 650 线、三中 600 线；提分值 = 650 - 总分 + 20
+    html += '<div class="gap-line">距离一中上线还需要 <span class="gap-num">' + (650 - total) + '</span> 分</div>';
+    html += '<div class="gap-line">距离三中上线还需要 <span class="gap-num">' + (600 - total) + '</span> 分</div>';
+    var tifen = 650 - total + 20;
+  } else {
+    // 高中：普通本科 500 线、211/双一流 600 线、985 650 线；提分值按总分分档
+    html += '<div class="gap-line">距离普通本科上线还差 <span class="gap-num">' + (500 - total) + '</span> 分</div>';
+    html += '<div class="gap-line">距离211/双一流高校还差 <span class="gap-num">' + (600 - total) + '</span> 分</div>';
+    html += '<div class="gap-line">距离985高校还差 <span class="gap-num">' + (650 - total) + '</span> 分</div>';
+    var tifen = (total <= 500) ? (500 - total + 30) : (600 - total + 31);
+  }
 
   // 有低分科目时显示提分联系方式
   if (lowSubjects.length > 0) {
-    html += '<div class="low-contact">不补课快速提高分数<span class="gap-num">30-50</span><br>添加微信或者电话联系12345678910</div>';
+    html += '<div class="low-contact">不补课快速提高分数<span class="gap-num">' + tifen + '</span><br>添加微信或者电话联系12345678910</div>';
   }
 
   lowBox.innerHTML = html;
