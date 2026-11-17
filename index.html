@@ -110,6 +110,8 @@
   }
   .low-item { font-size: 13px; color: #e67e22; margin-bottom: 4px; font-weight: 600; }
   .low-contact { font-size: 13px; color: #e74c3c; margin-top: 8px; line-height: 1.6; }
+  .gap-line { font-size: 14px; color: #444; margin-top: 6px; text-align: left; font-weight: 500; }
+  .gap-num { color: #e74c3c; font-weight: 700; font-size: 17px; }
   .close-btn {
     background: #eee;
     color: #555;
@@ -217,24 +219,33 @@ function analyze() {
     '语文 ' + cn + ' 分，数学 ' + ma + ' 分，英语 ' + en + ' 分（总分 ' + total + '）';
   document.getElementById('rAvg').textContent = '三科平均分：' + avg + ' 分';
 
-  // 低分判断：按年级校验标准，每科单独提示
+  // 低分判断：按年级校验标准，同一行显示
   var lowSubjects = [];
   if (cn < rule.low) { lowSubjects.push('语文'); }
   if (ma < rule.low) { lowSubjects.push('数学'); }
   if (en < rule.low) { lowSubjects.push('英语'); }
 
   var lowBox = document.getElementById('lowBox');
+  var html = '';
+
+  // 低分科目：同一行显示
   if (lowSubjects.length > 0) {
-    var html = '';
-    lowSubjects.forEach(function (s) {
-      html += '<div class="low-item">⚠️ ' + s + '分数较低</div>';
-    });
-    html += '<div class="low-contact">不补课快速提高分数30-50<br>添加微信或者电话联系12345678910</div>';
-    lowBox.innerHTML = html;
-    lowBox.style.display = 'block';
-  } else {
-    lowBox.style.display = 'none';
+    html += '<div class="low-item">' + lowSubjects.join(' ') + '分数较低</div>';
   }
+
+  // 上线差距：650 为一中线，600 为二中线，差值红色加粗
+  var gap1 = 650 - total;
+  var gap2 = 600 - total;
+  html += '<div class="gap-line">距离一中上线还需要 <span class="gap-num">' + gap1 + '</span> 分</div>';
+  html += '<div class="gap-line">距离二中上线还需要 <span class="gap-num">' + gap2 + '</span> 分</div>';
+
+  // 有低分科目时显示提分联系方式
+  if (lowSubjects.length > 0) {
+    html += '<div class="low-contact">不补课快速提高分数<span class="gap-num">30-50</span><br>添加微信或者电话联系12345678910</div>';
+  }
+
+  lowBox.innerHTML = html;
+  lowBox.style.display = 'block';
 
   document.getElementById('overlay').classList.add('show');
 }
