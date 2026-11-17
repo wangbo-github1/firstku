@@ -233,11 +233,11 @@ function analyze() {
     html += '<div class="low-item">' + lowSubjects.join(' ') + '分数较低</div>';
   }
 
-  // 上线差距：650 为一中线，600 为二中线，差值红色加粗
+  // 上线差距：650 为一中线，600 为三中线，差值红色加粗
   var gap1 = 650 - total;
   var gap2 = 600 - total;
   html += '<div class="gap-line">距离一中上线还需要 <span class="gap-num">' + gap1 + '</span> 分</div>';
-  html += '<div class="gap-line">距离二中上线还需要 <span class="gap-num">' + gap2 + '</span> 分</div>';
+  html += '<div class="gap-line">距离三中上线还需要 <span class="gap-num">' + gap2 + '</span> 分</div>';
 
   // 有低分科目时显示提分联系方式
   if (lowSubjects.length > 0) {
