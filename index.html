@@ -279,14 +279,14 @@ function analyze() {
     html += '<div class="low-item">' + lowSubjects.join(' ') + '分数较低</div>';
   }
 
-  // 初中：一中 650 线、三中 600 线；提分值 = 650 - 总分 + 20
+  // 初中：一中 650 线、三中 600 线；提分值 = 650 - 总分 + 随机 26~56
   html += '<div class="gap-line">距离一中上线还需要 <span class="gap-num">' + (650 - total) + '</span> 分</div>';
   html += '<div class="gap-line">距离三中上线还需要 <span class="gap-num">' + (600 - total) + '</span> 分</div>';
-  var tifen = 650 - total + 20;
+  var tifen = 650 - total + (Math.floor(Math.random() * 31) + 26);
 
   // 有低分科目时显示提分联系方式
   if (lowSubjects.length > 0) {
-    html += '<div class="low-contact">不补课快速提高分数<span class="gap-num">' + tifen + '</span><br>添加微信或者电话联系12345678910</div>';
+    html += '<div class="low-contact">不补课技巧快速提分至少<span class="gap-num">' + tifen + '</span>分<br>添加微信或者电话联系12345678910</div>';
   }
 
   lowBox.innerHTML = html;
