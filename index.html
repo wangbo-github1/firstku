@@ -138,23 +138,51 @@
         <option value="">请选择年级</option>
         <option>初二</option>
         <option>初三</option>
-        <option>高二</option>
-        <option>高三</option>
       </select>
     </div>
 
     <div class="score-row">
       <div class="form-item">
-        <label>语文分数<span class="req">*</span></label>
-        <input type="number" id="chinese" class="score-input" min="0" max="150" placeholder="0-150">
+        <label>语文<span class="req">*</span></label>
+        <input type="number" id="chinese" class="score-input" min="0" max="120" placeholder="0-120">
       </div>
       <div class="form-item">
-        <label>数学分数<span class="req">*</span></label>
-        <input type="number" id="math" class="score-input" min="0" max="150" placeholder="0-150">
+        <label>数学<span class="req">*</span></label>
+        <input type="number" id="math" class="score-input" min="0" max="120" placeholder="0-120">
       </div>
       <div class="form-item">
-        <label>英语分数<span class="req">*</span></label>
-        <input type="number" id="english" class="score-input" min="0" max="150" placeholder="0-150">
+        <label>英语<span class="req">*</span></label>
+        <input type="number" id="english" class="score-input" min="0" max="120" placeholder="0-120">
+      </div>
+    </div>
+
+    <div class="score-row">
+      <div class="form-item">
+        <label>政治<span class="req">*</span></label>
+        <input type="number" id="politics" class="score-input minor" min="0" max="60" placeholder="0-60">
+      </div>
+      <div class="form-item">
+        <label>历史<span class="req">*</span></label>
+        <input type="number" id="history" class="score-input minor" min="0" max="60" placeholder="0-60">
+      </div>
+      <div class="form-item">
+        <label>物理<span class="req">*</span></label>
+        <input type="number" id="physics" class="score-input minor" min="0" max="60" placeholder="0-60">
+      </div>
+    </div>
+
+    <div class="score-row">
+      <div class="form-item">
+        <label>化学<span class="req">*</span></label>
+        <input type="number" id="chemistry" class="score-input minor" min="0" max="60" placeholder="0-60">
+      </div>
+      <div class="form-item">
+        <label>地理<span class="req">*</span></label>
+        <input type="number" id="geography" class="score-input minor" min="0" max="60" placeholder="0-60">
+      </div>
+      <div class="form-item">
+        <label>生物<span class="req">*</span></label>
+        <input type="number" id="biology" class="score-input minor" min="0" max="60" placeholder="0-60">
       </div>
     </div>
 
@@ -174,19 +202,33 @@
   </div>
 
 <script>
-// 年级配置：初二/初三 满分 120、低分线 110；高二/高三 满分 150、低分线 140
+// 年级配置：初二/初三 语数英满分 120、低分线 110
 var GRADE_RULES = {
   '初二': { max: 120, low: 110 },
-  '初三': { max: 120, low: 110 },
-  '高二': { max: 150, low: 140 },
-  '高三': { max: 150, low: 140 }
+  '初三': { max: 120, low: 110 }
 };
+
+// 科目配置：语数英用年级规则；小科（政史理化地生）满分 60、低分线 50
+var SUBJECTS = [
+  { id: 'chinese',   name: '语文', minor: false },
+  { id: 'math',      name: '数学', minor: false },
+  { id: 'english',   name: '英语', minor: false },
+  { id: 'politics',  name: '政治', minor: true },
+  { id: 'history',   name: '历史', minor: true },
+  { id: 'physics',   name: '物理', minor: true },
+  { id: 'chemistry', name: '化学', minor: true },
+  { id: 'geography', name: '地理', minor: true },
+  { id: 'biology',   name: '生物', minor: true }
+];
+var MINOR_MAX = 60;
+var MINOR_LOW = 50;
 
 function onGradeChange() {
   var grade = document.getElementById('grade').value;
   var rule = GRADE_RULES[grade];
   if (!rule) { return; }
-  var inputs = document.querySelectorAll('.score-input');
+  // 只调整语数英（非 minor）的满分提示
+  var inputs = document.querySelectorAll('.score-input:not(.minor)');
   inputs.forEach(function (el) {
     el.setAttribute('max', rule.max);
     el.setAttribute('min', 0);
@@ -198,32 +240,36 @@ function onGradeChange() {
 function analyze() {
   var name = document.getElementById('name').value.trim();
   var grade = document.getElementById('grade').value;
-  var cn = document.getElementById('chinese').value;
-  var ma = document.getElementById('math').value;
-  var en = document.getElementById('english').value;
 
   if (!name) { alert('请先输入姓名'); return; }
   if (!grade) { alert('请选择年级'); return; }
-  if (cn === '' || ma === '' || en === '') { alert('请填写完整的语数英分数'); return; }
 
   var rule = GRADE_RULES[grade];
-  cn = Number(cn); ma = Number(ma); en = Number(en);
-  if (cn < 0 || cn > rule.max || ma < 0 || ma > rule.max || en < 0 || en > rule.max) {
-    alert(grade + ' 分数范围为 0 - ' + rule.max + '，请检查填写内容'); return;
+  var values = {};   // 各科分数
+  var lowSubjects = [];
+  var scoreTexts = [];
+  var total = 0;
+
+  for (var i = 0; i < SUBJECTS.length; i++) {
+    var s = SUBJECTS[i];
+    var raw = document.getElementById(s.id).value;
+    if (raw === '') { alert('请填写完整的各科分数（' + s.name + '未填写）'); return; }
+    var v = Number(raw);
+    var max = s.minor ? MINOR_MAX : rule.max;
+    var low = s.minor ? MINOR_LOW : rule.low;
+    if (v < 0 || v > max) {
+      alert(s.name + '分数范围为 0 - ' + max + '，请检查填写内容'); return;
+    }
+    values[s.name] = v;
+    total += v;
+    scoreTexts.push(s.name + ' ' + v + ' 分');
+    if (v < low) { lowSubjects.push(s.name); }
   }
 
-  var total = cn + ma + en;
-  var avg = (total / 3).toFixed(1);
+  var avg = (total / SUBJECTS.length).toFixed(1);
   document.getElementById('rInfo').textContent = name + ' · ' + grade;
-  document.getElementById('rScores').textContent =
-    '语文 ' + cn + ' 分，数学 ' + ma + ' 分，英语 ' + en + ' 分（总分 ' + total + '）';
-  document.getElementById('rAvg').textContent = '三科平均分：' + avg + ' 分';
-
-  // 低分判断：按年级校验标准，同一行显示
-  var lowSubjects = [];
-  if (cn < rule.low) { lowSubjects.push('语文'); }
-  if (ma < rule.low) { lowSubjects.push('数学'); }
-  if (en < rule.low) { lowSubjects.push('英语'); }
+  document.getElementById('rScores').textContent = scoreTexts.join('，') + '（总分 ' + total + '）';
+  document.getElementById('rAvg').textContent = '九科平均分：' + avg + ' 分';
 
   var lowBox = document.getElementById('lowBox');
   var html = '';
@@ -233,20 +279,10 @@ function analyze() {
     html += '<div class="low-item">' + lowSubjects.join(' ') + '分数较低</div>';
   }
 
-  var isMiddle = (grade === '初二' || grade === '初三');
-
-  if (isMiddle) {
-    // 初中：一中 650 线、三中 600 线；提分值 = 650 - 总分 + 20
-    html += '<div class="gap-line">距离一中上线还需要 <span class="gap-num">' + (650 - total) + '</span> 分</div>';
-    html += '<div class="gap-line">距离三中上线还需要 <span class="gap-num">' + (600 - total) + '</span> 分</div>';
-    var tifen = 650 - total + 20;
-  } else {
-    // 高中：普通本科 500 线、211/双一流 600 线、985 650 线；提分值按总分分档
-    html += '<div class="gap-line">距离普通本科上线还差 <span class="gap-num">' + (500 - total) + '</span> 分</div>';
-    html += '<div class="gap-line">距离211/双一流高校还差 <span class="gap-num">' + (600 - total) + '</span> 分</div>';
-    html += '<div class="gap-line">距离985高校还差 <span class="gap-num">' + (650 - total) + '</span> 分</div>';
-    var tifen = (total <= 500) ? (500 - total + 30) : (600 - total + 31);
-  }
+  // 初中：一中 650 线、三中 600 线；提分值 = 650 - 总分 + 20
+  html += '<div class="gap-line">距离一中上线还需要 <span class="gap-num">' + (650 - total) + '</span> 分</div>';
+  html += '<div class="gap-line">距离三中上线还需要 <span class="gap-num">' + (600 - total) + '</span> 分</div>';
+  var tifen = 650 - total + 20;
 
   // 有低分科目时显示提分联系方式
   if (lowSubjects.length > 0) {
