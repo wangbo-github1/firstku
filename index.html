@@ -342,7 +342,7 @@ function analyze() {
   var lowBox = document.getElementById('lowBox');
   var html = '';
 
-  // 学情诊断：按单科得分率排序，生成个性化补课建议
+  // 学情诊断：按单科得分率排序 + 多套话术模板随机组合，每次分析措辞不同
   var AI_ADVICE = {
     '语文': '阅读理解答题模板与作文结构',
     '数学': '函数、几何辅助线与压轴题技巧',
@@ -354,6 +354,56 @@ function analyze() {
     '地理': '读图分析与答题模板',
     '生物': '高频考点与图表题技巧'
   };
+
+  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+  function fill(tpl, map) { return tpl.replace(/\{(\w+)\}/g, function (_, k) { return map[k]; }); }
+  function b(s) { return '<span class="hl">【' + s + '】</span>'; }
+
+  var T = {
+    open: [
+      '当前最薄弱的是{w}（{d}，得分率 {p}%，{t}）',
+      '从九科数据来看，{w}的失分最集中（{d}，得分率仅 {p}%，{t}）',
+      '诊断发现：{w}是目前的主要短板（{d}，得分率 {p}%，{t}）',
+      '综合各科表现，{w}拉低了整体水平（{d}，得分率 {p}%，{t}）',
+      '数据显示，{w}与你的平均水平差距最大（{d}，得分率 {p}%，{t}）'
+    ],
+    act: [
+      '建议从{a}入手，用技巧快速突破，可优先补回约 {n} 分缺口。',
+      '建议优先攻克{a}，这部分提分最快，短期预计找回约 {n} 分。',
+      '建议先集中火力突破{a}，用技巧快速补上约 {n} 分。',
+      '{a}的提分性价比最高，率先突破可补回约 {n} 分。'
+    ],
+    second: [
+      '{w}（得分率 {p}%）次之，建议安排在第二阶段集中攻克{a}。',
+      '其次是{w}（得分率 {p}%），适合第二阶段用技巧突破{a}。',
+      '{w}的提升空间同样明显（得分率 {p}%），可同步安排{a}的专项训练。'
+    ],
+    third: [
+      '{w}（得分率 {p}%）也需要重点关注。',
+      '另外，{w}的得分率偏低（{p}%），建议纳入后续补强计划。',
+      '{w}暂列第三（得分率 {p}%），可排在补课计划后半段处理。'
+    ],
+    strong: [
+      '{s}表现最好（得分率 {r}%），继续保持。',
+      '{s}是你的优势科目（得分率 {r}%），稳住优势的同时主攻短板。',
+      '值得肯定的是{s}（得分率 {r}%），优势保持，重心放在补短板上。'
+    ],
+    order: [
+      '整体建议补课优先顺序：{o}。',
+      '建议按 {o} 的顺序逐步突破，效率最高。',
+      '技巧提分路线图：{o}。'
+    ],
+    tierLow: ['急需补强', '短板明显，需要优先处理', '失分较为严重'],
+    tierMid: ['有较大提升空间', '提升潜力明显', '还有不少可挖掘的分数'],
+    tierHigh: ['基础扎实，保持巩固', '发挥稳定', '掌握较好']
+  };
+
+  function tier(r) {
+    if (r < 0.5) { return pick(T.tierLow); }
+    if (r < 0.75) { return pick(T.tierMid); }
+    return pick(T.tierHigh);
+  }
+
   var scored = [];
   for (var j = 0; j < SUBJECTS.length; j++) {
     var su = SUBJECTS[j];
@@ -362,23 +412,36 @@ function analyze() {
   scored.sort(function (a, b) { return a.rate - b.rate; });
   var weakest = scored.slice(0, Math.min(3, scored.length));
   var strongest = scored[scored.length - 1];
-
-  function tier(r) {
-    if (r < 0.5) { return '急需补强'; }
-    if (r < 0.75) { return '有较大提升空间'; }
-    return '基础扎实，保持巩固';
-  }
+  var w0 = weakest[0];
 
   html += '<div class="diag-title">学 情 诊 断</div><div class="diag-text">';
-  html += '当前最薄弱的是<span class="hl">【' + weakest[0].name + '】</span>（' + weakest[0].score + '/' + weakest[0].max + '，得分率 ' + Math.round(weakest[0].rate * 100) + '%，' + tier(weakest[0].rate) + '），建议从' + AI_ADVICE[weakest[0].name] + '入手技巧突破，可优先补回约 ' + Math.round((weakest[0].max - weakest[0].score) * 0.4) + ' 分缺口。';
+  html += fill(pick(T.open), {
+    w: b(w0.name), d: w0.score + '/' + w0.max,
+    p: Math.round(w0.rate * 100), t: tier(w0.rate)
+  }) + '。';
+  html += fill(pick(T.act), {
+    a: AI_ADVICE[w0.name],
+    n: Math.round((w0.max - w0.score) * 0.4)
+  });
   if (weakest.length > 1) {
-    html += '<span class="hl">【' + weakest[1].name + '】</span>（得分率 ' + Math.round(weakest[1].rate * 100) + '%）次之，建议安排在第二阶段集中攻克' + AI_ADVICE[weakest[1].name] + '。';
+    var w1 = weakest[1];
+    html += fill(pick(T.second), {
+      w: b(w1.name), p: Math.round(w1.rate * 100), a: AI_ADVICE[w1.name]
+    });
   }
   if (weakest.length > 2) {
-    html += '<span class="hl">【' + weakest[2].name + '】</span>（得分率 ' + Math.round(weakest[2].rate * 100) + '%）同样需要关注。';
+    var w2 = weakest[2];
+    html += fill(pick(T.third), {
+      w: b(w2.name), p: Math.round(w2.rate * 100)
+    });
   }
-  html += '【' + strongest.name + '】表现最好（得分率 ' + Math.round(strongest.rate * 100) + '%），继续保持。';
-  html += '整体建议补课优先顺序：<span class="pri">' + weakest.map(function (s) { return s.name; }).join(' → ') + '</span>。';
+  html += fill(pick(T.strong), {
+    s: '<span class="pri">' + strongest.name + '</span>',
+    r: Math.round(strongest.rate * 100)
+  });
+  html += fill(pick(T.order), {
+    o: weakest.map(function (s) { return s.name; }).join(' → ')
+  });
   html += '</div>';
 
   // 提分值：总分达到一中线(600)后按 20~50 随机；未达到按 600-总分+随机26~56
