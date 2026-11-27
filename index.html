@@ -72,6 +72,8 @@
   }
   button:active { opacity: .85; }
   button:disabled { opacity: .5; cursor: not-allowed; }
+  .score-err { color: #e74c3c; font-size: 12px; text-align: center; margin-top: -6px; margin-bottom: 10px; }
+  .input-err { border-color: #e74c3c !important; background: #fff5f5; }
   .tip { text-align: center; font-size: 12px; color: #bbb; margin-top: 12px; }
   /* 分析结果弹窗 */
   .overlay {
@@ -191,6 +193,7 @@
     </div>
 
     <button id="analyzeBtn" onclick="analyze()">开始分析</button>
+    <div id="scoreErr" class="score-err" style="display:none;"></div>
   </div>
 
   <!-- 结果弹窗 -->
@@ -239,7 +242,52 @@ function onGradeChange() {
     el.setAttribute('placeholder', '0-' + rule.max);
     if (el.value !== '' && Number(el.value) > rule.max) { el.value = ''; }
   });
+  validateAll();
 }
+
+// 实时校验：每科不能超出可输入范围
+function getMaxOf(el) {
+  if (el.classList.contains('minor')) { return MINOR_MAX; }
+  var grade = document.getElementById('grade').value;
+  var rule = GRADE_RULES[grade];
+  return rule ? rule.max : 120;
+}
+
+function getNameOf(el) {
+  for (var i = 0; i < SUBJECTS.length; i++) {
+    if (SUBJECTS[i].id === el.id) { return SUBJECTS[i].name; }
+  }
+  return '';
+}
+
+function validateInput(el) {
+  var v = el.value;
+  var max = getMaxOf(el);
+  var errBox = document.getElementById('scoreErr');
+  if (v !== '' && (Number(v) > max || Number(v) < 0)) {
+    el.classList.add('input-err');
+    errBox.textContent = getNameOf(el) + '分数范围为 0 - ' + max + '，超出范围请重新填写';
+    errBox.style.display = 'block';
+    return false;
+  }
+  el.classList.remove('input-err');
+  // 全部合法后隐藏错误提示
+  var anyErr = document.querySelectorAll('.score-input.input-err').length > 0;
+  if (!anyErr) { errBox.style.display = 'none'; }
+  return true;
+}
+
+function validateAll() {
+  document.querySelectorAll('.score-input').forEach(function (el) {
+    if (el.value !== '') { validateInput(el); }
+  });
+}
+
+// 输入时即时校验
+document.querySelectorAll('.score-input').forEach(function (el) {
+  el.addEventListener('input', function () { validateInput(el); });
+  el.addEventListener('blur', function () { validateInput(el); });
+});
 
 function analyze() {
   var name = document.getElementById('name').value.trim();
