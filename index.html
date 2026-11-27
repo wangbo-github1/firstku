@@ -112,6 +112,7 @@
   .low-contact { font-size: 13px; color: #e74c3c; margin-top: 8px; line-height: 1.6; }
   .gap-line { font-size: 14px; color: #444; margin-top: 6px; text-align: left; font-weight: 500; }
   .gap-num { color: #e74c3c; font-weight: 700; font-size: 17px; }
+  .ok-line { color: #27ae60; font-weight: 700; }
   .wx-box { margin-top: 14px; text-align: center; }
   .wx-qr { width: 180px; max-width: 60%; height: auto; display: inline-block; border-radius: 6px; }
   .wx-tip { font-size: 12px; color: #999; margin-top: 6px; }
@@ -282,9 +283,17 @@ function analyze() {
     html += '<div class="low-item">' + lowSubjects.join(' ') + '分数较低</div>';
   }
 
-  // 初中：一中 600 线、三中 550 线（各减 50）
-  html += '<div class="gap-line">距离一中上线还需要 <span class="gap-num">' + (600 - total) + '</span> 分</div>';
-  html += '<div class="gap-line">距离三中上线还需要 <span class="gap-num">' + (550 - total) + '</span> 分</div>';
+  // 初中：一中 600 线、三中 550 线；达标后显示"已满足"
+  if (total >= 600) {
+    html += '<div class="gap-line ok-line">✅ 已满足一中的上线标准</div>';
+  } else {
+    html += '<div class="gap-line">距离一中上线还需要 <span class="gap-num">' + (600 - total) + '</span> 分</div>';
+  }
+  if (total >= 550) {
+    html += '<div class="gap-line ok-line">✅ 已满足三中上线标准</div>';
+  } else {
+    html += '<div class="gap-line">距离三中上线还需要 <span class="gap-num">' + (550 - total) + '</span> 分</div>';
+  }
 
   // 提分值：总分达到一中线(600)后按 20~50 随机；未达到按 600-总分+随机26~56
   var tifen;
