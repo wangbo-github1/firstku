@@ -216,7 +216,7 @@
     </div>
 
     <div class="score-row">
-      <div class="form-item">
+      <div class="form-item" id="chemistry-item" style="display:none;">
         <label>化学<span class="req">*</span></label>
         <input type="number" id="chemistry" class="score-input minor" min="0" max="60" placeholder="0-60">
       </div>
@@ -269,9 +269,33 @@ var SUBJECTS = [
 var MINOR_MAX = 60;
 var MINOR_LOW = 50;
 
+// 化学仅在「初三」显示；其余年级不参与填写、校验与分析
+function isSubjectActive(id) {
+  if (id === 'chemistry') {
+    return document.getElementById('grade').value === '初三';
+  }
+  return true;
+}
+function activeSubjects() {
+  return SUBJECTS.filter(function (s) { return isSubjectActive(s.id); });
+}
+
 function onGradeChange() {
   var grade = document.getElementById('grade').value;
   var rule = GRADE_RULES[grade];
+
+  // 化学只在初三出现
+  var chemItem = document.getElementById('chemistry-item');
+  var chem = document.getElementById('chemistry');
+  if (grade === '初三') {
+    chemItem.style.display = '';
+  } else {
+    chemItem.style.display = 'none';
+    chem.value = '';
+    chem.classList.remove('input-err');
+  }
+  document.getElementById('scoreErr').style.display = 'none';
+
   if (!rule) { return; }
   // 只调整语数英（非 minor）的满分提示
   var inputs = document.querySelectorAll('.score-input:not(.minor)');
@@ -300,6 +324,10 @@ function getNameOf(el) {
 }
 
 function validateInput(el) {
+  if (!isSubjectActive(el.id)) {
+    el.classList.remove('input-err');
+    return true;
+  }
   var v = el.value;
   var max = getMaxOf(el);
   var errBox = document.getElementById('scoreErr');
@@ -336,13 +364,14 @@ function analyze() {
   if (!grade) { alert('请选择年级'); return; }
 
   var rule = GRADE_RULES[grade];
+  var list = activeSubjects();   // 当前年级实际参与的科目（化学仅初三）
   var values = {};   // 各科分数
   var lowSubjects = [];
   var scoreTexts = [];
   var total = 0;
 
-  for (var i = 0; i < SUBJECTS.length; i++) {
-    var s = SUBJECTS[i];
+  for (var i = 0; i < list.length; i++) {
+    var s = list[i];
     var raw = document.getElementById(s.id).value;
     if (raw === '') { alert('请填写完整的各科分数（' + s.name + '未填写）'); return; }
     var v = Number(raw);
@@ -357,10 +386,10 @@ function analyze() {
     if (v < low) { lowSubjects.push(s.name); }
   }
 
-  var avg = (total / SUBJECTS.length).toFixed(1);
+  var avg = (total / list.length).toFixed(1);
   document.getElementById('rInfo').textContent = name + ' · ' + grade;
   document.getElementById('rScores').textContent = scoreTexts.join('，') + '（总分 ' + total + '）';
-  document.getElementById('rAvg').textContent = '九科平均分：' + avg + ' 分';
+  document.getElementById('rAvg').textContent = list.length + '科平均分：' + avg + ' 分';
 
   var lowBox = document.getElementById('lowBox');
   var html = '';
@@ -385,7 +414,7 @@ function analyze() {
   var T = {
     open: [
       '当前最薄弱的是{w}（{d}，得分率 {p}%，{t}）',
-      '从九科数据来看，{w}的失分最集中（{d}，得分率仅 {p}%，{t}）',
+      '从{cnt}科数据来看，{w}的失分最集中（{d}，得分率仅 {p}%，{t}）',
       '诊断发现：{w}是目前的主要短板（{d}，得分率 {p}%，{t}）',
       '综合各科表现，{w}拉低了整体水平（{d}，得分率 {p}%，{t}）',
       '数据显示，{w}与你的平均水平差距最大（{d}，得分率 {p}%，{t}）'
@@ -433,8 +462,8 @@ function analyze() {
   }
 
   var scored = [];
-  for (var j = 0; j < SUBJECTS.length; j++) {
-    var su = SUBJECTS[j];
+  for (var j = 0; j < list.length; j++) {
+    var su = list[j];
     scored.push({ name: su.name, rate: values[su.name] / (su.minor ? MINOR_MAX : rule.max), score: values[su.name], max: (su.minor ? MINOR_MAX : rule.max), minor: su.minor });
   }
   // 优先级规则：语数英低于 85 分的科目强制排到补课顺序最前
@@ -454,7 +483,7 @@ function analyze() {
     html += fill(pick(T.warn), { names: priorityNames.map(function (n) { return b(n); }).join('、') });
   }
   html += fill(pick(T.open), {
-    w: b(w0.name), d: w0.score + '/' + w0.max,
+    cnt: list.length, w: b(w0.name), d: w0.score + '/' + w0.max,
     p: Math.round(w0.rate * 100), t: tier(w0.rate)
   }) + '。';
   html += fill(pick(T.act), {
