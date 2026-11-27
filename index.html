@@ -388,6 +388,11 @@ function analyze() {
       '{s}是你的优势科目（得分率 {r}%），稳住优势的同时主攻短板。',
       '值得肯定的是{s}（得分率 {r}%），优势保持，重心放在补短板上。'
     ],
+    warn: [
+      '特别提醒：{names}低于 85 分，属于基础失分区，按技巧提分体系必须最先安排补课。',
+      '{names}低于 85 分，优先级最高，建议直接安排在补课第一阶段，技巧突破见效最快。',
+      '注意：{names}已低于 85 分警戒线，这三科(这几科)是当前提分杠杆最大的科目，务必最先突破。'
+    ],
     order: [
       '整体建议补课优先顺序：{o}。',
       '建议按 {o} 的顺序逐步突破，效率最高。',
@@ -407,14 +412,24 @@ function analyze() {
   var scored = [];
   for (var j = 0; j < SUBJECTS.length; j++) {
     var su = SUBJECTS[j];
-    scored.push({ name: su.name, rate: values[su.name] / (su.minor ? MINOR_MAX : rule.max), score: values[su.name], max: (su.minor ? MINOR_MAX : rule.max) });
+    scored.push({ name: su.name, rate: values[su.name] / (su.minor ? MINOR_MAX : rule.max), score: values[su.name], max: (su.minor ? MINOR_MAX : rule.max), minor: su.minor });
   }
-  scored.sort(function (a, b) { return a.rate - b.rate; });
+  // 优先级规则：语数英低于 85 分的科目强制排到补课顺序最前
+  scored.forEach(function (s) { s.priority = (!s.minor && s.score < 85); });
+  var priorityNames = scored.filter(function (s) { return s.priority; }).map(function (s) { return s.name; });
+  scored.sort(function (a, b) {
+    var pa = a.priority ? 0 : 1, pb = b.priority ? 0 : 1;
+    if (pa !== pb) { return pa - pb; }
+    return a.rate - b.rate;
+  });
   var weakest = scored.slice(0, Math.min(3, scored.length));
   var strongest = scored[scored.length - 1];
   var w0 = weakest[0];
 
   html += '<div class="diag-title">学 情 诊 断</div><div class="diag-text">';
+  if (priorityNames.length > 0) {
+    html += fill(pick(T.warn), { names: priorityNames.map(function (n) { return b(n); }).join('、') });
+  }
   html += fill(pick(T.open), {
     w: b(w0.name), d: w0.score + '/' + w0.max,
     p: Math.round(w0.rate * 100), t: tier(w0.rate)
