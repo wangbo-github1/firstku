@@ -115,6 +115,16 @@
   .gap-line { font-size: 14px; color: #444; margin-top: 6px; text-align: left; font-weight: 500; }
   .gap-num { color: #e74c3c; font-weight: 700; font-size: 17px; }
   .ok-line { color: #27ae60; font-weight: 700; }
+  .ai-box {
+    background: #f0f5ff;
+    border: 1px solid #c9d8ff;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 12px 0 4px;
+    text-align: left;
+  }
+  .ai-title { font-size: 13px; color: #4a6fe3; font-weight: 700; margin-bottom: 6px; }
+  .ai-text { font-size: 13px; color: #445; line-height: 1.7; }
   .wx-box { margin-top: 14px; text-align: center; }
   .wx-link { display: inline-block; }
   .wx-qr { width: 220px; max-width: 70%; height: auto; display: inline-block; border-radius: 6px; }
@@ -207,6 +217,7 @@
       <p id="rScores"></p>
       <p id="rAvg"></p>
       <div id="lowBox" class="low-box" style="display:none;"></div>
+      <div id="aiBox" class="ai-box" style="display:none;"></div>
       <button class="close-btn" onclick="closeOverlay()">关闭</button>
     </div>
   </div>
@@ -362,6 +373,47 @@ function analyze() {
 
   lowBox.innerHTML = html;
   lowBox.style.display = 'block';
+
+  // AI 学情诊断：按单科得分率排序，生成个性化补课建议
+  var AI_ADVICE = {
+    '语文': '阅读理解答题模板与作文结构',
+    '数学': '函数、几何辅助线与压轴题技巧',
+    '英语': '语法填空、完形填空与写作句型',
+    '政治': '材料分析题答题模板',
+    '历史': '时间线梳理与材料题技巧',
+    '物理': '受力分析、电路与实验题技巧',
+    '化学': '化学方程式与推断题技巧',
+    '地理': '读图分析与答题模板',
+    '生物': '高频考点与图表题技巧'
+  };
+  var scored = [];
+  for (var j = 0; j < SUBJECTS.length; j++) {
+    var su = SUBJECTS[j];
+    scored.push({ name: su.name, rate: values[su.name] / (su.minor ? MINOR_MAX : rule.max), score: values[su.name], max: (su.minor ? MINOR_MAX : rule.max) });
+  }
+  scored.sort(function (a, b) { return a.rate - b.rate; });
+  var weakest = scored.slice(0, Math.min(3, scored.length));
+  var strongest = scored[scored.length - 1];
+
+  function tier(r) {
+    if (r < 0.5) { return '急需补强'; }
+    if (r < 0.75) { return '有较大提升空间'; }
+    return '基础扎实，保持巩固';
+  }
+
+  var ai = '<div class="ai-title">🤖 AI 学情诊断</div><div class="ai-text">';
+  ai += '当前最薄弱的是【' + weakest[0].name + '】（' + weakest[0].score + '/' + weakest[0].max + '，得分率 ' + Math.round(weakest[0].rate * 100) + '%，' + tier(weakest[0].rate) + '），建议从' + AI_ADVICE[weakest[0].name] + '入手技巧突破，可优先补回约 ' + Math.round((weakest[0].max - weakest[0].score) * 0.4) + ' 分缺口。';
+  if (weakest.length > 1) {
+    ai += '【' + weakest[1].name + '】（得分率 ' + Math.round(weakest[1].rate * 100) + '%）次之，建议安排在第二阶段集中攻克' + AI_ADVICE[weakest[1].name] + '。';
+  }
+  if (weakest.length > 2) {
+    ai += '【' + weakest[2].name + '】（得分率 ' + Math.round(weakest[2].rate * 100) + '%）同样需要关注。';
+  }
+  ai += '【' + strongest.name + '】表现最好（得分率 ' + Math.round(strongest.rate * 100) + '%），继续保持。';
+  ai += '整体建议补课优先顺序：' + weakest.map(function (s) { return s.name; }).join(' → ') + '。';
+  ai += '</div>';
+  document.getElementById('aiBox').innerHTML = ai;
+  document.getElementById('aiBox').style.display = 'block';
 
   document.getElementById('overlay').classList.add('show');
 }
