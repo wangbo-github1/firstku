@@ -103,28 +103,28 @@
   .result h2 { font-size: 18px; color: #333; margin-bottom: 16px; }
   .result p { font-size: 14px; color: #666; margin-bottom: 8px; }
   .low-box {
-    background: #fff6f0;
-    border: 1px solid #ffcfb3;
-    border-radius: 8px;
-    padding: 12px;
-    margin: 10px 0 4px;
-    text-align: left;
-  }
-  .low-item { font-size: 13px; color: #e67e22; margin-bottom: 4px; font-weight: 600; }
-  .low-contact { font-size: 13px; color: #e74c3c; margin-top: 8px; line-height: 1.6; }
-  .gap-line { font-size: 14px; color: #444; margin-top: 6px; text-align: left; font-weight: 500; }
-  .gap-num { color: #e74c3c; font-weight: 700; font-size: 17px; }
-  .ok-line { color: #27ae60; font-weight: 700; }
-  .ai-box {
-    background: #f0f5ff;
-    border: 1px solid #c9d8ff;
-    border-radius: 8px;
-    padding: 12px;
+    background: #f8f9ff;
+    border: 1px solid #dfe6ff;
+    border-radius: 10px;
+    padding: 14px;
     margin: 12px 0 4px;
     text-align: left;
   }
-  .ai-title { font-size: 13px; color: #4a6fe3; font-weight: 700; margin-bottom: 6px; }
-  .ai-text { font-size: 13px; color: #445; line-height: 1.7; }
+  .diag-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #3a56c5;
+    text-align: center;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed #c9d8ff;
+    margin-bottom: 8px;
+    letter-spacing: 2px;
+  }
+  .diag-text { font-size: 13px; color: #445; line-height: 1.75; }
+  .hl { color: #e67e22; font-weight: 700; }
+  .pri { color: #3a56c5; font-weight: 700; }
+  .low-contact { font-size: 13px; color: #e74c3c; margin-top: 10px; line-height: 1.6; text-align: center; }
+  .gap-num { color: #e74c3c; font-weight: 700; font-size: 17px; }
   .wx-box { margin-top: 14px; text-align: center; }
   .wx-link { display: inline-block; }
   .wx-qr { width: 220px; max-width: 70%; height: auto; display: inline-block; border-radius: 6px; }
@@ -217,7 +217,6 @@
       <p id="rScores"></p>
       <p id="rAvg"></p>
       <div id="lowBox" class="low-box" style="display:none;"></div>
-      <div id="aiBox" class="ai-box" style="display:none;"></div>
       <button class="close-btn" onclick="closeOverlay()">关闭</button>
     </div>
   </div>
@@ -340,41 +339,7 @@ function analyze() {
   var lowBox = document.getElementById('lowBox');
   var html = '';
 
-  // 低分科目：同一行显示
-  if (lowSubjects.length > 0) {
-    html += '<div class="low-item">' + lowSubjects.join(' ') + '分数较低</div>';
-  }
-
-  // 初中：一中 600 线、三中 550 线；达标后显示"已满足"
-  if (total >= 600) {
-    html += '<div class="gap-line ok-line">✅ 已满足一中的上线标准</div>';
-  } else {
-    html += '<div class="gap-line">距离一中上线还需要 <span class="gap-num">' + (600 - total) + '</span> 分</div>';
-  }
-  if (total >= 550) {
-    html += '<div class="gap-line ok-line">✅ 已满足三中上线标准</div>';
-  } else {
-    html += '<div class="gap-line">距离三中上线还需要 <span class="gap-num">' + (550 - total) + '</span> 分</div>';
-  }
-
-  // 提分值：总分达到一中线(600)后按 20~50 随机；未达到按 600-总分+随机26~56
-  var tifen;
-  if (total >= 600) {
-    tifen = Math.floor(Math.random() * 31) + 20;
-  } else {
-    tifen = 600 - total + (Math.floor(Math.random() * 31) + 26);
-  }
-
-  // 有低分科目、或总分达到一中上线时，显示提分联系方式和微信二维码
-  if (lowSubjects.length > 0 || total >= 600) {
-    html += '<div class="low-contact">不补课技巧快速提分至少<span class="gap-num">' + tifen + '</span>分<br>添加微信或者电话联系12345678910</div>';
-    html += '<div class="wx-box"><a class="wx-link" href="wechat-qr.png?v=4" target="_blank"><img class="wx-qr" src="wechat-qr.png?v=4" alt="微信二维码"></a><div class="wx-tip">长按识别二维码 添加微信<br>若无法识别，点击二维码放大后再长按</div></div>';
-  }
-
-  lowBox.innerHTML = html;
-  lowBox.style.display = 'block';
-
-  // AI 学情诊断：按单科得分率排序，生成个性化补课建议
+  // 学情诊断：按单科得分率排序，生成个性化补课建议
   var AI_ADVICE = {
     '语文': '阅读理解答题模板与作文结构',
     '数学': '函数、几何辅助线与压轴题技巧',
@@ -401,19 +366,35 @@ function analyze() {
     return '基础扎实，保持巩固';
   }
 
-  var ai = '<div class="ai-title">🤖 AI 学情诊断</div><div class="ai-text">';
-  ai += '当前最薄弱的是【' + weakest[0].name + '】（' + weakest[0].score + '/' + weakest[0].max + '，得分率 ' + Math.round(weakest[0].rate * 100) + '%，' + tier(weakest[0].rate) + '），建议从' + AI_ADVICE[weakest[0].name] + '入手技巧突破，可优先补回约 ' + Math.round((weakest[0].max - weakest[0].score) * 0.4) + ' 分缺口。';
+  html += '<div class="diag-title">学 情 诊 断</div><div class="diag-text">';
+  html += '当前最薄弱的是<span class="hl">【' + weakest[0].name + '】</span>（' + weakest[0].score + '/' + weakest[0].max + '，得分率 ' + Math.round(weakest[0].rate * 100) + '%，' + tier(weakest[0].rate) + '），建议从' + AI_ADVICE[weakest[0].name] + '入手技巧突破，可优先补回约 ' + Math.round((weakest[0].max - weakest[0].score) * 0.4) + ' 分缺口。';
   if (weakest.length > 1) {
-    ai += '【' + weakest[1].name + '】（得分率 ' + Math.round(weakest[1].rate * 100) + '%）次之，建议安排在第二阶段集中攻克' + AI_ADVICE[weakest[1].name] + '。';
+    html += '<span class="hl">【' + weakest[1].name + '】</span>（得分率 ' + Math.round(weakest[1].rate * 100) + '%）次之，建议安排在第二阶段集中攻克' + AI_ADVICE[weakest[1].name] + '。';
   }
   if (weakest.length > 2) {
-    ai += '【' + weakest[2].name + '】（得分率 ' + Math.round(weakest[2].rate * 100) + '%）同样需要关注。';
+    html += '<span class="hl">【' + weakest[2].name + '】</span>（得分率 ' + Math.round(weakest[2].rate * 100) + '%）同样需要关注。';
   }
-  ai += '【' + strongest.name + '】表现最好（得分率 ' + Math.round(strongest.rate * 100) + '%），继续保持。';
-  ai += '整体建议补课优先顺序：' + weakest.map(function (s) { return s.name; }).join(' → ') + '。';
-  ai += '</div>';
-  document.getElementById('aiBox').innerHTML = ai;
-  document.getElementById('aiBox').style.display = 'block';
+  html += '【' + strongest.name + '】表现最好（得分率 ' + Math.round(strongest.rate * 100) + '%），继续保持。';
+  html += '整体建议补课优先顺序：<span class="pri">' + weakest.map(function (s) { return s.name; }).join(' → ') + '</span>。';
+  html += '</div>';
+
+  // 提分值：总分达到一中线(600)后按 20~50 随机；未达到按 600-总分+随机26~56
+  var tifen;
+  if (total >= 600) {
+    tifen = Math.floor(Math.random() * 31) + 20;
+  } else {
+    tifen = 600 - total + (Math.floor(Math.random() * 31) + 26);
+  }
+
+  // 有低分科目、或总分达到一中上线时，显示提分联系方式和微信二维码
+  if (lowSubjects.length > 0 || total >= 600) {
+    html += '<div class="low-contact">不补课技巧快速提分至少<span class="gap-num">' + tifen + '</span>分<br>添加微信或者电话联系12345678910</div>';
+    html += '<div class="wx-box"><a class="wx-link" href="wechat-qr.png?v=4" target="_blank"><img class="wx-qr" src="wechat-qr.png?v=4" alt="微信二维码"></a><div class="wx-tip">长按识别二维码 添加微信<br>若无法识别，点击二维码放大后再长按</div></div>';
+  }
+
+  lowBox.innerHTML = html;
+  lowBox.style.display = 'block';
+
 
   document.getElementById('overlay').classList.add('show');
 }
