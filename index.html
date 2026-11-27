@@ -131,7 +131,7 @@
 </head>
 <body>
   <!-- 提前加载二维码，保证弹窗出现时图片已就绪（长按识别不失败） -->
-  <img src="wechat-qr.png?v=3" alt="" style="display:none;">
+  <img src="wechat-qr.png?v=4" alt="" style="display:none;">
   <div class="card">
     <h1>📊 成绩分析</h1>
     <div class="sub">请填写以下信息后点击"开始分析"</div>
@@ -357,7 +357,7 @@ function analyze() {
   // 有低分科目、或总分达到一中上线时，显示提分联系方式和微信二维码
   if (lowSubjects.length > 0 || total >= 600) {
     html += '<div class="low-contact">不补课技巧快速提分至少<span class="gap-num">' + tifen + '</span>分<br>添加微信或者电话联系12345678910</div>';
-    html += '<div class="wx-box"><a class="wx-link" href="wechat-qr.png?v=3" target="_blank"><img class="wx-qr" src="wechat-qr.png?v=3" alt="微信二维码"></a><div class="wx-tip">长按识别二维码 添加微信<br>若无法识别，点击二维码放大后再长按</div></div>';
+    html += '<div class="wx-box"><a class="wx-link" href="wechat-qr.png?v=4" target="_blank"><img class="wx-qr" src="wechat-qr.png?v=4" alt="微信二维码"></a><div class="wx-tip">长按识别二维码 添加微信<br>若无法识别，点击二维码放大后再长按</div></div>';
   }
 
   lowBox.innerHTML = html;
